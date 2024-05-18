@@ -1,19 +1,42 @@
 use http_body_util::{BodyExt, Empty};
-use hyper::body::Bytes;
-use hyper::body::Incoming;
-use hyper::Response;
+use hyper::body::{Body, Bytes};
+//use hyper::body::Incoming;
+//use hyper::Response;
 use hyper_tls::HttpsConnector;
 use hyper_util::{client::legacy::Client, rt::TokioExecutor};
-use regex::Regex;
-use tokio::fs::File;
+//use regex::Regex;
 use tokio::io::{self, AsyncWriteExt as _};
 
-mod networking {
-    pub mod download {
-        pub async fn download_file() {}
+pub mod networking {
+    pub mod file {
+        use http_body_util::BodyExt;
+        use hyper::body::Incoming;
+        use hyper::Response;
+        use tokio::fs::File;
+        use tokio::io::AsyncWriteExt as _;
+
+        pub async fn download_file(
+            filename: &str,
+            mut res: Response<Incoming>,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            // Create file.
+            let mut file = File::create(filename).await?;
+
+            // Write all frames to file.
+            while let Some(frame) = res.body_mut().frame().await {
+                let frame = frame?;
+                if let Some(d) = frame.data_ref() {
+                    file.write_all(d).await?;
+                }
+            }
+
+            file.sync_all().await?;
+            Ok(())
+        }
     }
 }
 
+/*
 async fn write_to_stdout(
     mut res: Response<Incoming>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -24,8 +47,9 @@ async fn write_to_stdout(
         }
     }
     Ok(())
-}
+}*/
 
+/*
 async fn write_to_file(
     filename: &str,
     mut res: Response<Incoming>,
@@ -43,7 +67,7 @@ async fn write_to_file(
 
     file.sync_all().await?;
     Ok(())
-}
+}*/
 
 /*
 async fn get_file_url(url: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -68,7 +92,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let res = client.get(url).await?;
     assert_eq!(res.status(), 200);
 
-    write_to_file("Atlantis-SOSP.pdf", res).await?;
+    networking::file::download_file("Atlantis-SOSP.pdf", res).await?;
+    //write_to_file("Atlantis-SOSP.pdf", res).await?;
 
     Ok(())
 }
