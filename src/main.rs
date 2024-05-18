@@ -4,8 +4,15 @@ use hyper::body::Incoming;
 use hyper::Response;
 use hyper_tls::HttpsConnector;
 use hyper_util::{client::legacy::Client, rt::TokioExecutor};
+use regex::Regex;
 use tokio::fs::File;
 use tokio::io::{self, AsyncWriteExt as _};
+
+mod networking {
+    pub mod download {
+        pub async fn download_file() {}
+    }
+}
 
 async fn write_to_stdout(
     mut res: Response<Incoming>,
@@ -38,11 +45,22 @@ async fn write_to_file(
     Ok(())
 }
 
+/*
+async fn get_file_url(url: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let re = Regex::new(r"(http)s^::/(d+)/(.+)$").unwrap();
+    let mut results = vec![];
+    for (_, [path, lineno, line]) in re.captures_iter(url).map(|c| c.extract()) {
+        results.push((path, lineno.parse::<u64>()?, line));
+    }
+    Ok(())
+    }*/
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // This is where we will setup our HTTP client requests.
     let https = HttpsConnector::new();
-    let main_url = "https://github.com/hyperium/hyper/blob/master/examples/client.rs";
+    let main_url =
+        "https://www.microsoft.com/en-us/research/wp-content/uploads/2011/10/Atlantis-SOSP.pdf";
     let url = main_url.parse::<hyper::Uri>()?;
 
     // Create the Hyper client
@@ -50,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let res = client.get(url).await?;
     assert_eq!(res.status(), 200);
 
-    write_to_file("client.html", res).await?;
+    write_to_file("Atlantis-SOSP.pdf", res).await?;
 
     Ok(())
 }
