@@ -34,6 +34,35 @@ pub mod networking {
             Ok(())
         }
     }
+
+    pub mod stream {
+        use std::io::Read;
+
+        use http_body_util::BodyExt;
+        use hyper::body::Incoming;
+        use hyper::Response;
+        use tokio::io::{self, AsyncWriteExt as _};
+
+        pub async fn write_to_stdout(
+            mut res: Response<Incoming>,
+        ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+            while let Some(frame) = res.body_mut().frame().await {
+                let frame = frame?;
+                if let Some(d) = frame.data_ref() {
+                    io::stdout().write_all(d).await?;
+                }
+            }
+            Ok(())
+        }
+
+        pub async fn get_body_as_astring(
+            res: Response<Incoming>,
+        ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+            let body_bytes = res.collect().await?.to_bytes();
+            let body_str = String::from_utf8(body_bytes.into()).unwrap();
+            Ok(body_str)
+        }
+    }
 }
 
 /*
@@ -46,26 +75,6 @@ async fn write_to_stdout(
             io::stdout().write_all(d).await?;
         }
     }
-    Ok(())
-}*/
-
-/*
-async fn write_to_file(
-    filename: &str,
-    mut res: Response<Incoming>,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // Create file.
-    let mut file = File::create(filename).await?;
-
-    // Write all frames to file.
-    while let Some(frame) = res.body_mut().frame().await {
-        let frame = frame?;
-        if let Some(d) = frame.data_ref() {
-            file.write_all(d).await?;
-        }
-    }
-
-    file.sync_all().await?;
     Ok(())
 }*/
 
@@ -92,7 +101,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let res = client.get(url).await?;
     assert_eq!(res.status(), 200);
 
-    networking::file::download_file("Atlantis-SOSP.pdf", res).await?;
+    //networking::file::download_file("Atlantis-SOSP.pdf", res).await?;
+
+    let pageString = networking::stream::get_body_as_astring(res).await?;
     //write_to_file("Atlantis-SOSP.pdf", res).await?;
 
     Ok(())
