@@ -92,19 +92,22 @@ async fn get_file_url(url: &str) -> Result<(), Box<dyn std::error::Error + Send 
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // This is where we will setup our HTTP client requests.
     let https = HttpsConnector::new();
-    let main_url =
-        "https://www.microsoft.com/en-us/research/wp-content/uploads/2011/10/Atlantis-SOSP.pdf";
+    //let main_url = "https://www.microsoft.com/en-us/research/wp-content/uploads/2011/10/Atlantis-SOSP.pdf";
+    let main_url = "https://stackoverflow.com/questions/27734708/println-error-expected-a-literal-format-argument-must-be-a-string-literal";
     let url = main_url.parse::<hyper::Uri>()?;
 
     // Create the Hyper client
     let client = Client::builder(TokioExecutor::new()).build::<_, Empty<Bytes>>(https);
     let res = client.get(url).await?;
-    assert_eq!(res.status(), 200);
+
+    //println!(res.status());
+    //assert_eq!(res.status(), 200);
 
     //networking::file::download_file("Atlantis-SOSP.pdf", res).await?;
+    networking::stream::write_to_stdout(res).await?;
 
-    let pageString = networking::stream::get_body_as_astring(res).await?;
-    //write_to_file("Atlantis-SOSP.pdf", res).await?;
-
+    //let string_res = networking::stream::get_body_as_astring(res).await?;
+    //let page_string = string_res.as_str();
+    //println!("{}", page_string);
     Ok(())
 }
