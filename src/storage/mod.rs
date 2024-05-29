@@ -24,3 +24,13 @@ pub mod file {
         Ok(())
     }
 }
+
+pub mod key_value {
+    pub async fn store_value(key: &str, value: &str) -> serde_json::Value {
+        return serde_json::json!({
+        "ok": true,
+        "key": key,
+        "value": value
+        });
+    }
+}

@@ -16,7 +16,7 @@ pub mod stream {
         Ok(())
     }
 
-    pub async fn get_body_as_astring(
+    pub async fn get_content_as_astring(
         res: Response<Incoming>,
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         let body_bytes = res.collect().await?.to_bytes();
