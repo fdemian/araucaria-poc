@@ -117,7 +117,10 @@ async fn run_server() -> anyhow::Result<SocketAddr> {
 
     module.register_method("say_hello", |_, _| {
         println!("say_hello method called!");
-        return PING_STR;
+        return serde_json::json!({
+           "ok": true,
+           "message": PING_STR,
+        });
     })?;
 
     // Network methods.
@@ -129,11 +132,13 @@ async fn run_server() -> anyhow::Result<SocketAddr> {
         println!("{}", url);
 
         let file_contents: Response<Incoming> = fetch::fetch::get_url_contents(url).await.unwrap();
-        let retval = storage::file::store_response_as_file("atlantis.pdf", file_contents).await;
+        let path: &str = storage::file::store_response_as_file("atlantis.pdf", file_contents)
+            .await
+            .unwrap();
 
         return serde_json::json!({
            "status": 200,
-           "path": "/user/atlantis.pdf",
+           "path": path,
            "filename": "atlantis.pdf",
            "size": 224
         });
@@ -149,7 +154,6 @@ async fn run_server() -> anyhow::Result<SocketAddr> {
             .await
             .unwrap();
 
-        //println!(page_contents);
         return serde_json::json!({
            "status": 200,
            "text": page_contents
