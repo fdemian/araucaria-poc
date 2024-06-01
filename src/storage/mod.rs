@@ -6,11 +6,15 @@ pub mod file {
     use tokio::io::AsyncWriteExt as _;
 
     pub async fn store_response_as_file(
+        filename: &str,
         filepath: &str,
         mut res: Response<Incoming>,
-    ) -> Result<&str, Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         // Create file.
-        let mut file: File = File::create(filepath).await?;
+        let mut fullpath: String = String::from(filepath);
+        fullpath.push_str(filename);
+
+        let mut file: File = File::create(fullpath).await?;
 
         // Write all frames to file.
         while let Some(frame) = res.body_mut().frame().await {
@@ -21,7 +25,8 @@ pub mod file {
         }
 
         file.sync_all().await?;
-        Ok(filepath)
+
+        Ok(filepath.to_string())
     }
 }
 

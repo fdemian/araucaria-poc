@@ -94,11 +94,12 @@ async fn run_server() -> anyhow::Result<SocketAddr> {
         let kv: &str = params.as_str().unwrap();
         let parsed_params: serde_json::Value = serde_json::from_str(kv).unwrap();
         let url: &str = parsed_params.get("url").unwrap().as_str().unwrap();
+        let path: &str = parsed_params.get("path").unwrap().as_str().unwrap();
         println!("{}", url);
 
         let filename: &str = url::utils::get_file_url(url).await.unwrap();
         let file_contents: Response<Incoming> = fetch::fetch::get_url_contents(url).await.unwrap();
-        let path: &str = storage::file::store_response_as_file(filename, file_contents)
+        let path: String = storage::file::store_response_as_file(filename, path, file_contents)
             .await
             .unwrap();
 
