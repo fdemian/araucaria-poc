@@ -176,6 +176,7 @@ dependencies = [
  "hyper-tls",
  "hyper-util",
  "jsonrpsee",
+ "regex",
  "serde",
  "serde_json",
  "tokio",
