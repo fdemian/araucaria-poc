@@ -1,7 +1,6 @@
 use hyper::body::Incoming;
 use hyper::{Method, Response};
 use jsonrpsee::server::{RpcModule, Server};
-use regex::Regex;
 use std::net::SocketAddr;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -9,25 +8,7 @@ use tower_http::cors::{Any, CorsLayer};
 pub mod fetch;
 pub mod storage;
 pub mod stream;
-/*
-async fn get_file_url(url: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let re = Regex::new(r"(http)s^::/(d+)/(.+)$").unwrap();
-    let mut results = vec![];
-    for (_, [path, lineno, line]) in re.captures_iter(url).map(|c| c.extract()) {
-        results.push((path, lineno.parse::<u64>()?, line));
-    }
-    Ok(())
-    }*/
-
-async fn get_file_url(url: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let re = Regex::new(r"^(http)s*::/(d+)/(.+)$").unwrap();
-    let mut results = vec![];
-    for (_, [path, lineno, line]) in re.captures_iter(url).map(|c| c.extract()) {
-        println!("{}", line);
-        results.push((path, lineno.parse::<u64>()?, line));
-    }
-    Ok(())
-}
+pub mod url;
 
 const PING_STR: &str = "Hello there!!";
 const PARAMS_ERROR: &str = r#"
@@ -115,17 +96,16 @@ async fn run_server() -> anyhow::Result<SocketAddr> {
         let url: &str = parsed_params.get("url").unwrap().as_str().unwrap();
         println!("{}", url);
 
-        get_file_url(url).await;
-
+        let filename: &str = url::utils::get_file_url(url).await.unwrap();
         let file_contents: Response<Incoming> = fetch::fetch::get_url_contents(url).await.unwrap();
-        let path: &str = storage::file::store_response_as_file("atlantis.pdf", file_contents)
+        let path: &str = storage::file::store_response_as_file(filename, file_contents)
             .await
             .unwrap();
 
         return serde_json::json!({
            "status": 200,
            "path": path,
-           "filename": "atlantis.pdf",
+           "filename": filename,
            "size": 224
         });
     })?;
