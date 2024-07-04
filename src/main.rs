@@ -96,6 +96,7 @@ async fn run_server() -> anyhow::Result<SocketAddr> {
         let url: &str = parsed_params.get("url").unwrap().as_str().unwrap();
         let path: &str = parsed_params.get("path").unwrap().as_str().unwrap();
         println!("{}", url);
+        println!("{}", path);
 
         let filename: &str = url::utils::get_file_url(url).await.unwrap();
         let file_contents: Response<Incoming> = fetch::fetch::get_url_contents(url).await.unwrap();
